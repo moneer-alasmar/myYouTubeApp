@@ -1,0 +1,6 @@
+body{
+  background-color: slateblue;
+}
+#content, #authorize-button, #signout-button{
+  display: none;
+}
