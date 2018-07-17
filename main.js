@@ -94,15 +94,58 @@ function getChannel(channel) {
       <ul class="collection">
         <li class="collection-item">Title: ${channel.snippet.title}</li>
         <li class="collection-item">ID: ${channel.id}</li>
-        <li class="collection-item">Subscriber Count: ${channel.statistics.subscriberCount}</li>
-        <li class="collection-item">Views: ${channel.statistics.viewCount}</li>
-        <li class="collection-item">Videos: ${channel.statistics.videoCount}</li>
+        <li class="collection-item">Subscriber Count: ${numberWithCommas(channel.statistics.subscriberCount)}</li>
+        <li class="collection-item">Views: ${numberWithCommas(channel.statistics.viewCount)}</li>
+        <li class="collection-item">Videos: ${numberWithCommas(channel.statistics.videoCount)}</li>
       </ul>
       <p>${channel.snippet.description}</p>
       <hr>
       <a href="https://youtube.com/${channel.snippet.customUrl}" class="btn grey darken-2" target="_blank">View Channel</a>
       `;
       showChannelData(output);
+
+      const playlistId = channel.contentDetails.relatedPlaylists.uploads;
+      requestVideoPlaylist(playlistId);
     })
     .catch(err => alert('No Channel Found'));
+}
+
+// Add commas to integers
+function numberWithCommas (x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Playlist generator
+function requestVideoPlaylist(playlistId) {
+  const requestOptions = {
+    playlistId: playlistId,
+    part: 'snippet',
+    maxResults: 8
+  }
+
+  const request = gapi.client.youtube.playlistItems.list(requestOptions);
+
+  request.execute(response => {
+    console.log(response);
+    const playlistItems = response.result.items;
+    if(playlistItems) {
+      let output = `<br><h4 class="center-align">Latest Videos</h4>`;
+
+      // Loop through videos and append to output div
+      playlistItems.forEach(item => {
+        const videoId = item.snippet.resourceId.videoId;
+
+        output += `
+          <div class="col s3">
+          <iframe width="100%" height="auto" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          </div>
+        `;
+      })
+
+      // Video Output
+      videoContainer.innerHTML = output;
+    } else {
+      videoContainer.innerHTML = 'No Uploads';
+    }
+  })
 }
